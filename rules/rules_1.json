@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?googleads\\.g\\.doubleclick\\.net\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?doubleclick\\.net\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?googlesyndication\\.com\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?googleadservices\\.com\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/securepubads\\.g\\.doubleclick\\.net\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?gvt1\\.com\\/ads",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/s\\.youtube\\.com\\/api\\/stats\\/ads",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:www\\.)?youtube\\.com\\/api\\/stats\\/ads",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?pagead2\\.googlesyndication\\.com\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  },
+  {
+    "id": 10,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)?tpc\\.googlesyndication\\.com\\/",
+      "isUrlFilterCaseSensitive": false,
+      "resourceTypes": ["xmlhttprequest", "media", "script", "image", "sub_frame", "stylesheet", "font", "other"],
+      "initiatorDomains": [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "music.youtube.com"
+      ]
+    }
+  }
+]

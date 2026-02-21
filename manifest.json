@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Seamless YouTube Ad Blocker",
+  "version": "1.0",
+  "description": "Blocks YouTube pre-roll, mid-roll, post-roll, overlays, sidebar, and sponsored results. No tracking.",
+  "permissions": ["declarativeNetRequest", "storage"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://m.youtube.com/*",
+    "*://*.youtube-nocookie.com/*",
+    "*://youtu.be/*",
+    "*://music.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules/rules_1.json"
+      }
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://m.youtube.com/*",
+        "*://*.youtube-nocookie.com/*",
+        "*://youtu.be/*",
+        "*://music.youtube.com/*"
+      ],
+      "js": ["content-script.js"],
+      
+      "run_at": "document_start"
+    }
+  ],
+ 
+
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
