@@ -79,6 +79,14 @@
       ytd-rich-item-renderer:has(${REMOVE_SELECTORS.join(", ")}) {
         display: none !important;
       }
+      
+      /* Visually completely hide the video stream & player overlay while an ad is showing */
+      .ad-showing video {
+        opacity: 0 !important;
+      }
+      .ad-showing .ytp-ad-player-overlay {
+        display: none !important;
+      }
     `
     document.documentElement.appendChild(style)
   }
@@ -136,29 +144,31 @@
       return false
     }
 
-    // Try clicking skip buttons
-    let clicked = false
+    muteForAd()
+
+    // Fast-forward skip: Jump to the end instantly
+    const v = selectVideo()
+    if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
+      try {
+        if (v.currentTime < v.duration - 0.5) {
+          v.currentTime = v.duration - 0.1
+        }
+        v.playbackRate = 16
+        if (v.paused) v.play().catch(() => { })
+      } catch { }
+    }
+
+    // Try clicking skip buttons instantly
     for (const sel of SKIP_BUTTON_SELECTORS) {
       if (clickIfExists(sel)) {
-        clicked = true
         break
       }
     }
 
-    // Fast-forward skip
-    const v = selectVideo()
-    if (isAdShowing() && v && Number.isFinite(v.duration) && v.duration > 0.1) {
-      try {
-        muteForAd()
-        // Skip through the ad quickly
-        v.playbackRate = 16
-        // If we are at the start of an ad, jump near the end
-        if (v.currentTime < v.duration - 0.2) {
-          v.currentTime = v.duration - 0.1
-        }
-        // Ensure it's playing so it actually ends
-        if (v.paused) v.play().catch(() => { })
-      } catch { }
+    // Secondary effort to hide ad overlay parts quickly
+    const adOverlay = document.querySelector(".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info")
+    if (adOverlay) {
+      adOverlay.style.setProperty("display", "none", "important")
     }
 
     return true
@@ -207,6 +217,7 @@
   function scan() {
     if (!state.enabled) return
     injectStyles()
+    attachVideoListener()
     removeAdNodes()
     dismissEnforcementPopup()
     if (isWatchOrShorts()) {
@@ -217,12 +228,46 @@
     }
   }
 
+  // ─── Direct Video Events for Sub-millisecond Detection ──────
+  let videoElement = null;
+  function handleVideoEvents() {
+    if (!state.enabled) return;
+    if (isAdShowing()) {
+      skipAdIfAny();
+    }
+  }
+
+  function attachVideoListener() {
+    const v = selectVideo();
+    if (v && v !== videoElement) {
+      if (videoElement) {
+        videoElement.removeEventListener("timeupdate", handleVideoEvents);
+        videoElement.removeEventListener("play", handleVideoEvents);
+        videoElement.removeEventListener("loadeddata", handleVideoEvents);
+      }
+      videoElement = v;
+      videoElement.addEventListener("timeupdate", handleVideoEvents);
+      videoElement.addEventListener("play", handleVideoEvents);
+      videoElement.addEventListener("loadeddata", handleVideoEvents);
+    }
+  }
+
   // ─── Observers & Loops ─────────────────────────────────────
+  let scanTimeout = null;
   const observer = new MutationObserver(() => {
     const t = now()
-    if (t - state.lastScan < 200) return // Throttle mutations
-    state.lastScan = t
-    scan()
+    if (t - state.lastScan > 200) {
+      state.lastScan = t
+      scan()
+    } else {
+      if (!scanTimeout) {
+        scanTimeout = setTimeout(() => {
+          state.lastScan = now()
+          scan()
+          scanTimeout = null
+        }, 200)
+      }
+    }
   })
 
   function startAdLoop() {
@@ -231,8 +276,8 @@
     const loop = () => {
       if (!state.enabled) return
       scan()
-      // Faster loop during the first 5 seconds of navigation to catch start ads
-      const interval = isAdShowing() ? 100 : 300
+      // Faster loop to catch start ads more instantly
+      const interval = isAdShowing() ? 50 : 250
       setTimeout(loop, interval)
     }
     loop()
