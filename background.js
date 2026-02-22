@@ -1,5 +1,4 @@
 const RULESET_ID = "ruleset_1"
-const chrome = window.chrome // Declare the chrome variable
 
 async function setRulesetEnabled(enabled) {
   try {

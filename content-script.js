@@ -18,9 +18,7 @@
 
   if (!state.enabled) return
 
-  // ─── Selectors ──────────────────────────────────────────────
   const REMOVE_SELECTORS = [
-    // Header/Sidebar Ad Slots
     "#masthead-ad",
     "ytd-ad-slot-renderer",
     "ytd-display-ad-renderer",
@@ -33,14 +31,14 @@
     "ytd-banner-promo-renderer",
     "ytd-rich-section-renderer[is-shorts-ads]",
     "ytd-ad-feedback-renderer",
-    // Engagement panel ads & Banners reported by user
     "ytd-ads-engagement-panel-content-renderer",
     '#panels ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"]',
     "ad-grid-card-collection-view-model",
     "ad-grid-card-text-view-model",
     "ad-button-view-model",
     "panel-text-icon-text-grid-cards-sub-layout-content-view-model",
-    // Player Overlays
+    "#clarify-box",
+    "ytd-emergency-onebox-renderer",
     "#player-ads",
     ".ytp-ad-module",
     ".ytp-ad-image-overlay",
@@ -59,9 +57,6 @@
     ".ytp-ad-overlay-close-button",
     ".ytp-ad-survey-answer-button",
   ]
-
-  // ─── Static Hiding (CSS) ────────────────────────────────────
-  // Injecting CSS is more "seamless" and doesn't break grid layouts as much as JS removal
   function injectStyles() {
     if (document.getElementById("yt-ad-blocker-styles")) return
     const style = document.createElement("style")
@@ -91,7 +86,6 @@
     document.documentElement.appendChild(style)
   }
 
-  // ─── Helpers ────────────────────────────────────────────────
   const now = () => performance.now()
   const isWatchOrShorts = () => {
     const p = location.pathname
@@ -110,7 +104,7 @@
 
   function clickIfExists(selector) {
     const el = document.querySelector(selector)
-    if (el && el.offsetHeight > 0) { // Only click if visible
+    if (el && el.offsetHeight > 0) {
       try {
         el.click()
         return true
@@ -136,8 +130,6 @@
       state.savedVolume = -1
     }
   }
-
-  // ─── Ad Skipping ───────────────────────────────────────────
   function skipAdIfAny() {
     if (!isAdShowing()) {
       restoreVolume()
@@ -145,8 +137,6 @@
     }
 
     muteForAd()
-
-    // Fast-forward skip: Jump to the end instantly
     const v = selectVideo()
     if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
       try {
@@ -158,14 +148,11 @@
       } catch { }
     }
 
-    // Try clicking skip buttons instantly
     for (const sel of SKIP_BUTTON_SELECTORS) {
       if (clickIfExists(sel)) {
         break
       }
     }
-
-    // Secondary effort to hide ad overlay parts quickly
     const adOverlay = document.querySelector(".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info")
     if (adOverlay) {
       adOverlay.style.setProperty("display", "none", "important")
@@ -174,11 +161,9 @@
     return true
   }
 
-  // ─── Popup Dismissal ───────────────────────────────────────
+  // Popup Dismissal 
   function dismissEnforcementPopup() {
     let dismissed = false
-
-    // Find violation popups
     const dialogs = document.querySelectorAll("tp-yt-paper-dialog")
     dialogs.forEach(dialog => {
       if (dialog.querySelector("ytd-enforcement-message-view-model") ||
@@ -194,18 +179,15 @@
     if (dismissed && backdrops.length > 0) {
       backdrops.forEach(b => b.remove())
       document.body.style.overflow = "auto"
-      // Resume playback ONLY if we just dismissed a popup
       const v = selectVideo()
       if (v && v.paused) v.play().catch(() => { })
     }
   }
 
-  // ─── Cleaner Node Removal fallback ─────────────────────────
-  // Some ads are injected dynamically and might ignore the style tag
+  //  Cleaner Node Removal fallback 
   function removeAdNodes() {
     for (const sel of REMOVE_SELECTORS) {
       document.querySelectorAll(sel).forEach(el => {
-        // Only hide, don't remove structural elements to prevent grid breakage
         if (el.style.display !== "none") {
           el.style.setProperty("display", "none", "important")
         }
@@ -213,7 +195,7 @@
     }
   }
 
-  // ─── Scan Logic ───────────────────────────────────────────
+  // Scan Logic 
   function scan() {
     if (!state.enabled) return
     injectStyles()
@@ -223,12 +205,11 @@
     if (isWatchOrShorts()) {
       skipAdIfAny()
     } else {
-      // If we are not on a video page, restore volume just in case
       restoreVolume()
     }
   }
 
-  // ─── Direct Video Events for Sub-millisecond Detection ──────
+  // Direct Video Events for Sub-millisecond Detection 
   let videoElement = null;
   function handleVideoEvents() {
     if (!state.enabled) return;
@@ -252,7 +233,7 @@
     }
   }
 
-  // ─── Observers & Loops ─────────────────────────────────────
+  // Observers & Loops 
   let scanTimeout = null;
   const observer = new MutationObserver(() => {
     const t = now()
@@ -276,14 +257,13 @@
     const loop = () => {
       if (!state.enabled) return
       scan()
-      // Faster loop to catch start ads more instantly
       const interval = isAdShowing() ? 50 : 250
       setTimeout(loop, interval)
     }
     loop()
   }
 
-  // ─── Entry Points ─────────────────────────────────────────
+  // Entry Points 
   injectStyles()
   scan()
 

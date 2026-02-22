@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Seamless YouTube Ad Blocker",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "Blocks YouTube pre-roll, mid-roll, post-roll, overlays, sidebar, and sponsored results. No tracking.",
-  "permissions": ["declarativeNetRequest", "storage"],
+  "permissions": [
+    "declarativeNetRequest",
+    "storage"
+  ],
   "host_permissions": [
     "*://*.youtube.com/*",
     "*://m.youtube.com/*",
@@ -33,13 +36,12 @@
         "*://youtu.be/*",
         "*://music.youtube.com/*"
       ],
-      "js": ["content-script.js"],
-      
+      "js": [
+        "content-script.js"
+      ],
       "run_at": "document_start"
     }
   ],
- 
-
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",
