@@ -74,12 +74,15 @@
       ytd-rich-item-renderer:has(${REMOVE_SELECTORS.join(", ")}) {
         display: none !important;
       }
-      
-      /* Visually completely hide the video stream & player overlay while an ad is showing */
-      .ad-showing video {
-        opacity: 0 !important;
-      }
-      .ad-showing .ytp-ad-player-overlay {
+      /* Hide only the ad overlay UI, NOT the video element itself.
+         Hiding the <video> via opacity causes the black screen the user sees. */
+      .ad-showing .ytp-ad-player-overlay,
+      .ad-showing .ytp-ad-player-overlay-instream-info,
+      .ad-showing .ytp-ad-text,
+      .ad-showing .ytp-ad-preview-container,
+      .ad-showing .ytp-ad-skip-button-slot,
+      .ad-showing .ytp-ad-message-slot,
+      .ad-showing .ytp-ad-visit-advertiser-button {
         display: none !important;
       }
     `
@@ -137,28 +140,67 @@
     }
 
     muteForAd()
+
+    // Click ALL skip / dismiss buttons (don't stop at the first)
+    for (const sel of SKIP_BUTTON_SELECTORS) {
+      clickIfExists(sel)
+    }
+
     const v = selectVideo()
     if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
       try {
-        if (v.currentTime < v.duration - 0.5) {
-          v.currentTime = v.duration - 0.1
-        }
+        // Seek to the very end of the ad
+        v.currentTime = v.duration
         v.playbackRate = 16
         if (v.paused) v.play().catch(() => { })
+
+        // Dispatch 'ended' so YouTube's player transitions to real content
+        v.dispatchEvent(new Event("ended"))
       } catch { }
     }
 
-    for (const sel of SKIP_BUTTON_SELECTORS) {
-      if (clickIfExists(sel)) {
-        break
-      }
-    }
-    const adOverlay = document.querySelector(".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info")
-    if (adOverlay) {
-      adOverlay.style.setProperty("display", "none", "important")
-    }
+    // Hide any surviving ad overlay elements
+    const adOverlays = document.querySelectorAll(
+      ".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info, " +
+      ".ytp-ad-text, .ytp-ad-preview-container"
+    )
+    adOverlays.forEach(el =>
+      el.style.setProperty("display", "none", "important")
+    )
+
+    // Safety net: if the player is still stuck in ad-showing state after a
+    // short delay, force-remove the class so the actual video can render.
+    scheduleAdShowingCleanup()
 
     return true
+  }
+
+  let cleanupTimer = null
+  function scheduleAdShowingCleanup() {
+    if (cleanupTimer) return
+    cleanupTimer = setTimeout(() => {
+      cleanupTimer = null
+      const player = document.querySelector(".html5-video-player")
+      if (!player) return
+      if (player.classList.contains("ad-showing") ||
+        player.classList.contains("ad-interrupting")) {
+        // Still stuck — try skip buttons one more time
+        for (const sel of SKIP_BUTTON_SELECTORS) {
+          clickIfExists(sel)
+        }
+        const v = selectVideo()
+        if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
+          try {
+            v.currentTime = v.duration
+            v.dispatchEvent(new Event("ended"))
+          } catch { }
+        }
+        // Last resort: remove the ad-showing class so the real video appears
+        player.classList.remove("ad-showing", "ad-interrupting")
+        restoreVolume()
+        if (v && v.paused) v.play().catch(() => { })
+      }
+    }, 300)
   }
 
   // Popup Dismissal 
