@@ -74,8 +74,10 @@
       ytd-rich-item-renderer:has(${REMOVE_SELECTORS.join(", ")}) {
         display: none !important;
       }
-      /* Hide only the ad overlay UI, NOT the video element itself.
-         Hiding the <video> via opacity causes the black screen the user sees. */
+      /* Hide ad video & overlay so user never sees ad content */
+      .ad-showing video {
+        opacity: 0 !important;
+      }
       .ad-showing .ytp-ad-player-overlay,
       .ad-showing .ytp-ad-player-overlay-instream-info,
       .ad-showing .ytp-ad-text,
@@ -133,6 +135,49 @@
       state.savedVolume = -1
     }
   }
+
+  /** Force the ad video to end instantly and tell YouTube to move on. */
+  function forceEndAdVideo() {
+    const v = selectVideo()
+    if (!v || !Number.isFinite(v.duration) || v.duration <= 0.1) return
+    try {
+      v.currentTime = v.duration - 0.1
+      v.playbackRate = 16
+      if (v.paused) v.play().catch(() => { })
+    } catch { }
+  }
+
+  /** Click every known skip / dismiss button. */
+  function clickAllSkipButtons() {
+    for (const sel of SKIP_BUTTON_SELECTORS) {
+      clickIfExists(sel)
+    }
+  }
+
+  /**
+   * Force-clear the ad-showing state from the player so the real video
+   * becomes visible again (removes the black screen).
+   */
+  function forceRemoveAdState() {
+    const player = document.querySelector(".html5-video-player")
+    if (!player) return
+    player.classList.remove("ad-showing", "ad-interrupting")
+    // Also remove any leftover ad overlay elements from the DOM
+    const adOverlays = document.querySelectorAll(
+      ".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info, " +
+      ".ytp-ad-text, .ytp-ad-preview-container, .ytp-ad-module"
+    )
+    adOverlays.forEach(el =>
+      el.style.setProperty("display", "none", "important")
+    )
+    restoreVolume()
+    const v = selectVideo()
+    if (v) {
+      v.playbackRate = 1
+      if (v.paused) v.play().catch(() => { })
+    }
+  }
+
   function skipAdIfAny() {
     if (!isAdShowing()) {
       restoreVolume()
@@ -141,66 +186,47 @@
 
     muteForAd()
 
-    // Click ALL skip / dismiss buttons (don't stop at the first)
-    for (const sel of SKIP_BUTTON_SELECTORS) {
-      clickIfExists(sel)
-    }
+    // Step 1: Seek the ad video to its end
+    forceEndAdVideo()
 
-    const v = selectVideo()
-    if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
-      try {
-        // Seek to the very end of the ad
-        v.currentTime = v.duration
-        v.playbackRate = 16
-        if (v.paused) v.play().catch(() => { })
+    // Step 2: Click all skip / dismiss buttons
+    clickAllSkipButtons()
 
-        // Dispatch 'ended' so YouTube's player transitions to real content
-        v.dispatchEvent(new Event("ended"))
-      } catch { }
-    }
-
-    // Hide any surviving ad overlay elements
-    const adOverlays = document.querySelectorAll(
-      ".ytp-ad-player-overlay, .ytp-ad-player-overlay-instream-info, " +
-      ".ytp-ad-text, .ytp-ad-preview-container"
-    )
-    adOverlays.forEach(el =>
-      el.style.setProperty("display", "none", "important")
-    )
-
-    // Safety net: if the player is still stuck in ad-showing state after a
-    // short delay, force-remove the class so the actual video can render.
+    // Step 3: Schedule aggressive cleanup to remove the stuck ad-showing
+    // state. This is what fixes the persistent black screen — if YouTube
+    // doesn't clear ad-showing on its own, we force it off.
     scheduleAdShowingCleanup()
 
     return true
   }
 
-  let cleanupTimer = null
+  let cleanupTimer1 = null
+  let cleanupTimer2 = null
   function scheduleAdShowingCleanup() {
-    if (cleanupTimer) return
-    cleanupTimer = setTimeout(() => {
-      cleanupTimer = null
-      const player = document.querySelector(".html5-video-player")
-      if (!player) return
-      if (player.classList.contains("ad-showing") ||
-        player.classList.contains("ad-interrupting")) {
-        // Still stuck — try skip buttons one more time
-        for (const sel of SKIP_BUTTON_SELECTORS) {
-          clickIfExists(sel)
+    // Fast first attempt at 100ms
+    if (!cleanupTimer1) {
+      cleanupTimer1 = setTimeout(() => {
+        cleanupTimer1 = null
+        if (!isAdShowing()) { restoreVolume(); return }
+        // Try skip buttons + seek again
+        clickAllSkipButtons()
+        forceEndAdVideo()
+        // If still stuck, force-remove ad state now
+        if (isAdShowing()) {
+          forceRemoveAdState()
         }
-        const v = selectVideo()
-        if (v && Number.isFinite(v.duration) && v.duration > 0.1) {
-          try {
-            v.currentTime = v.duration
-            v.dispatchEvent(new Event("ended"))
-          } catch { }
-        }
-        // Last resort: remove the ad-showing class so the real video appears
-        player.classList.remove("ad-showing", "ad-interrupting")
-        restoreVolume()
-        if (v && v.paused) v.play().catch(() => { })
-      }
-    }, 300)
+      }, 100)
+    }
+    // Safety-net second attempt at 500ms in case the first wasn't enough
+    if (!cleanupTimer2) {
+      cleanupTimer2 = setTimeout(() => {
+        cleanupTimer2 = null
+        if (!isAdShowing()) { restoreVolume(); return }
+        clickAllSkipButtons()
+        forceEndAdVideo()
+        forceRemoveAdState()
+      }, 500)
+    }
   }
 
   // Popup Dismissal 
